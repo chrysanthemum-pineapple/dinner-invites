@@ -144,6 +144,17 @@
     </div>
   </header>
 
+  <div class="nextPanel" style="margin-top:-4px">
+    <div class="nextRow">
+      <div>
+        <div class="secondary">Shared planner</div>
+        <div id="syncStatus" class="nextNames">Connecting to shared dinner…</div>
+        <div id="shareHint" class="secondary">Changes are saved online and synchronized without overlapping network requests.</div>
+      </div>
+      <button id="copyLinkBtn" class="promoteBtn">Copy share link</button>
+    </div>
+  </div>
+
   <div class="summary">
     <div class="stat"><small>Confirmed</small><strong id="confirmed">3</strong></div>
     <div class="stat"><small>Awaiting responses</small><strong id="awaiting">2</strong></div>
@@ -231,7 +242,12 @@
   </div>
 </dialog>
 
+
 <script>
+const SUPABASE_URL = 'https://tgidbtfggdvibkbwsdsw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6O1zlsl59kTrTdyKLR6Pyg_SwE-gdYZ';
+const API = SUPABASE_URL + "/rest/v1";
+
 const STATUS = {
   not: {label:"Not yet invited", cls:"s-not"},
   todo: {label:"To be invited", cls:"s-todo"},
@@ -240,55 +256,125 @@ const STATUS = {
   declined: {label:"Declined", cls:"s-no"}
 };
 
-const seed = {
-  target: 8,
-  guests: [
-    {id:1,name:"Maya",list:"A",status:"accepted",order:1},
-    {id:2,name:"Daniel",list:"A",status:"accepted",order:2},
-    {id:3,name:"Priya",list:"A",status:"awaiting",order:3},
-    {id:4,name:"Marcus",list:"A",status:"awaiting",order:4},
-    {id:5,name:"Elena",list:"A",status:"accepted",order:5},
-    {id:6,name:"Theo",list:"A",status:"declined",order:6},
-    {id:7,name:"Nina",list:"B",status:"todo",order:1},
-    {id:8,name:"Jordan",list:"B",status:"not",order:2},
-    {id:9,name:"Leah",list:"B",status:"not",order:3},
-    {id:10,name:"Owen",list:"B",status:"not",order:4}
-  ]
-};
+const SAMPLE_GUESTS = [
+  {name:"Maya",list:"A",status:"accepted",sort_order:1},
+  {name:"Daniel",list:"A",status:"accepted",sort_order:2},
+  {name:"Priya",list:"A",status:"awaiting",sort_order:3},
+  {name:"Marcus",list:"A",status:"awaiting",sort_order:4},
+  {name:"Elena",list:"A",status:"accepted",sort_order:5},
+  {name:"Theo",list:"A",status:"declined",sort_order:6},
+  {name:"Nina",list:"B",status:"todo",sort_order:1},
+  {name:"Jordan",list:"B",status:"not",sort_order:2},
+  {name:"Leah",list:"B",status:"not",sort_order:3},
+  {name:"Owen",list:"B",status:"not",sort_order:4}
+];
 
-let state = load();
+let state = {target:8, guests:[]};
+let dinnerId = new URLSearchParams(location.search).get("d");
 let draggedId = null;
-let previousStatus = null;
+let isBusy = false;
+let loadInFlight = false;
+let syncTimer = null;
+let lastSnapshot = "";
 
-function load(){
+function hdr(extra={}){
+  return Object.assign({
+    "apikey": SUPABASE_KEY,
+    "Content-Type":"application/json"
+  }, extra);
+}
+
+async function api(path, options={}){
+  const res = await fetch(API + path, {
+    ...options,
+    headers: hdr(options.headers || {})
+  });
+  if(!res.ok){
+    const t = await res.text();
+    throw new Error(`${res.status}: ${t}`);
+  }
+  const t = await res.text();
+  return t ? JSON.parse(t) : null;
+}
+
+function setSync(text){
+  document.getElementById("syncStatus").textContent = text;
+}
+
+async function createSharedDinner(){
+  setSync("Creating shared dinner…");
+  const rows = await api("/dinners", {
+    method:"POST",
+    headers:{"Prefer":"return=representation"},
+    body:JSON.stringify({name:"Dinner",target:8})
+  });
+  dinnerId = rows[0].id;
+  await api("/guests", {
+    method:"POST",
+    body:JSON.stringify(SAMPLE_GUESTS.map(g=>({...g,dinner_id:dinnerId})))
+  });
+  const u = new URL(location.href);
+  u.searchParams.set("d", dinnerId);
+  history.replaceState(null,"",u);
+}
+
+async function loadState(){
+  // Prevent overlapping reads. This is especially important in environments
+  // that pause fetches while asking for network permission.
+  if(isBusy || loadInFlight) return;
+
+  loadInFlight = true;
   try{
-    const saved = JSON.parse(localStorage.getItem("dinnerPlannerState"));
-    return saved && Array.isArray(saved.guests) ? saved : JSON.parse(JSON.stringify(seed));
-  }catch(e){ return JSON.parse(JSON.stringify(seed)); }
-}
-function save(){ localStorage.setItem("dinnerPlannerState", JSON.stringify(state)); }
+    if(!dinnerId) await createSharedDinner();
 
-function ordered(list){
-  return state.guests.filter(g=>g.list===list).sort((a,b)=>a.order-b.order);
+    const dinners = await api(`/dinners?id=eq.${encodeURIComponent(dinnerId)}&select=id,target,name`);
+    if(!dinners || !dinners.length) throw new Error("This shared dinner could not be found.");
+
+    const guests = await api(`/guests?dinner_id=eq.${encodeURIComponent(dinnerId)}&select=id,name,list,status,sort_order&order=list.asc,sort_order.asc`);
+    const snap = JSON.stringify([dinners[0].target, guests]);
+
+    state = {target:dinners[0].target, guests:guests || []};
+
+    if(snap !== lastSnapshot){
+      render();
+      lastSnapshot = snap;
+    }
+
+    setSync(`Shared · synced ${new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"})}`);
+    document.getElementById("shareHint").textContent =
+      "Changes are saved online. This page checks for collaborator updates after each completed sync.";
+  }catch(err){
+    console.error(err);
+    setSync("Could not connect to Supabase");
+    document.getElementById("shareHint").textContent =
+      "Check that the database tables and browser-access policies were created in Supabase. " + err.message;
+  }finally{
+    loadInFlight = false;
+  }
 }
-function normalize(list){
-  ordered(list).forEach((g,i)=>g.order=i+1);
+
+function scheduleNextSync(delay=5000){
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async ()=>{
+    await loadState();
+    scheduleNextSync(5000);
+  }, delay);
+}
+function ordered(list){
+  return state.guests.filter(g=>g.list===list).sort((a,b)=>a.sort_order-b.sort_order);
 }
 function counts(){
-  const c = key => state.guests.filter(g=>g.status===key).length;
+  const c=k=>state.guests.filter(g=>g.status===k).length;
   const accepted=c("accepted"), awaiting=c("awaiting"), todo=c("todo"), declined=c("declined");
   const remaining=Math.max(0,state.target-accepted);
-  const committed=accepted+awaiting+todo;
-  const unallocated=Math.max(0,state.target-committed);
   const projected=accepted+awaiting+todo;
-  return {accepted,awaiting,todo,declined,remaining,unallocated,projected};
+  const unallocated=Math.max(0,state.target-projected);
+  return {accepted,awaiting,todo,declined,remaining,projected,unallocated};
 }
-function eligibleB(){
-  return ordered("B").filter(g=>g.status==="not");
-}
+function eligibleB(){ return ordered("B").filter(g=>g.status==="not"); }
 function neededSuggestions(){
   const c=counts();
-  return Math.min(c.unallocated, eligibleB().length);
+  return Math.min(c.unallocated,eligibleB().length);
 }
 
 function render(){
@@ -299,17 +385,15 @@ function render(){
   document.getElementById("todo").textContent=c.todo;
   document.getElementById("unallocated").textContent=c.unallocated;
   document.getElementById("declined").textContent=c.declined;
-  document.getElementById("seatHeadline").textContent=`${c.accepted} confirmed · ${c.remaining} seat${c.remaining===1?"":"s"} remaining`;
-  document.getElementById("warning").textContent = c.projected>state.target
-    ? `Potentially over-invited by ${c.projected-state.target}.`
-    : (c.accepted>state.target ? `Confirmed attendance exceeds target by ${c.accepted-state.target}.` : "");
-
+  document.getElementById("seatHeadline").textContent =
+    `${c.accepted} confirmed · ${c.remaining} seat${c.remaining===1?"":"s"} remaining`;
+  document.getElementById("warning").textContent =
+    c.projected>state.target ? `Potentially over-invited by ${c.projected-state.target}.` : "";
   renderGuidance(c);
   renderList("A");
   renderList("B");
   document.getElementById("aCount").textContent=`${ordered("A").length} guest${ordered("A").length===1?"":"s"}`;
   document.getElementById("bCount").textContent=`${ordered("B").length} guest${ordered("B").length===1?"":"s"}`;
-  save();
 }
 
 function renderGuidance(c){
@@ -318,17 +402,22 @@ function renderGuidance(c){
   const btn=document.getElementById("promoteBtn");
   if(c.unallocated===0){
     document.getElementById("nextInvite").textContent="No additional invitations needed right now.";
-    document.getElementById("nextLine").textContent=c.awaiting ? `${c.awaiting} invitation${c.awaiting===1?" is":"s are"} still outstanding.` : "Your current invitation pipeline covers the target.";
+    document.getElementById("nextLine").textContent=c.awaiting
+      ? `${c.awaiting} invitation${c.awaiting===1?" is":"s are"} still outstanding.`
+      : "Your current invitation pipeline covers the target.";
     btn.style.display="none";
   } else if(candidates.length){
     document.getElementById("nextInvite").textContent=`Invite next: ${candidates.map(x=>x.name).join(", ")}`;
     const after=eligibleB()[n];
-    document.getElementById("nextLine").textContent=after ? `Next in line after ${n>1?"them":"that"}: ${after.name}` : "No additional backup guest is currently available after this.";
+    document.getElementById("nextLine").textContent=after
+      ? `Next in line after ${n>1?"them":"that"}: ${after.name}`
+      : "No additional backup guest is currently available after this.";
     btn.textContent=n===1 ? `Mark ${candidates[0].name} “To be invited”` : `Promote next ${n}`;
     btn.style.display="inline-block";
     btn.onclick=()=>promoteNeeded();
   } else {
-    document.getElementById("nextInvite").textContent=`${c.unallocated} unallocated seat${c.unallocated===1?"":"s"}, but no eligible B-list guest is available.`;
+    document.getElementById("nextInvite").textContent=
+      `${c.unallocated} unallocated seat${c.unallocated===1?"":"s"}, but no eligible B-list guest is available.`;
     document.getElementById("nextLine").textContent="Add someone to the B List or change an existing guest’s status.";
     btn.style.display="none";
   }
@@ -339,7 +428,7 @@ function renderList(list){
   zone.innerHTML="";
   const guests=ordered(list);
   if(!guests.length){
-    zone.innerHTML=`<div class="empty">Drop or add guests here.</div>`;
+    zone.innerHTML='<div class="empty">Drop or add guests here.</div>';
     return;
   }
   guests.forEach((g,i)=>{
@@ -347,10 +436,8 @@ function renderList(list){
     card.className="card";
     card.draggable=true;
     card.dataset.id=g.id;
-
     const priority=list==="B" ? `<span class="priority">${i+1}</span>` : `<span class="handle">⋮⋮</span>`;
     const badge=STATUS[g.status];
-
     card.innerHTML=`
       <div class="cardTop">
         ${priority}
@@ -368,123 +455,179 @@ function renderList(list){
         <button class="downBtn" ${i===guests.length-1?"disabled":""}>↓ Down</button>
         <button class="moveBtn">Move to ${list==="A"?"B":"A"} List</button>
         <button class="deleteBtn danger">Delete</button>
-      </div>
-    `;
-    const sel=card.querySelector("select");
-    sel.onfocus=()=> previousStatus=g.status;
-    sel.onchange=()=>{
+      </div>`;
+    card.querySelector("select").onchange=async e=>{
       const old=g.status;
-      g.status=sel.value;
-      if(sel.value==="declined" && old!=="declined"){
-        render();
-        showDeclinePrompt(g);
-      } else render();
+      await updateGuest(g.id,{status:e.target.value});
+      if(e.target.value==="declined" && old!=="declined") showDeclinePrompt(g);
     };
     card.querySelector(".editBtn").onclick=()=>editGuest(g);
-    card.querySelector(".moveBtn").onclick=()=>moveGuest(g, list==="A"?"B":"A");
-    card.querySelector(".deleteBtn").onclick=()=>{ if(confirm(`Delete ${g.name}?`)){ state.guests=state.guests.filter(x=>x.id!==g.id); normalize(list); render(); }};
+    card.querySelector(".moveBtn").onclick=()=>moveGuest(g,list==="A"?"B":"A");
+    card.querySelector(".deleteBtn").onclick=async()=>{
+      if(confirm(`Delete ${g.name}?`)){
+        await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"DELETE"});
+        await normalizeOrders(list);
+        await loadState();
+      }
+    };
     card.querySelector(".upBtn").onclick=()=>shift(g,-1);
     card.querySelector(".downBtn").onclick=()=>shift(g,1);
-
-    card.addEventListener("dragstart",e=>{draggedId=g.id; card.classList.add("dragging"); e.dataTransfer.effectAllowed="move";});
+    card.addEventListener("dragstart",e=>{draggedId=g.id;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
     card.addEventListener("dragend",()=>card.classList.remove("dragging"));
-    card.addEventListener("dragover",e=>{e.preventDefault();});
-    card.addEventListener("drop",e=>{
-      e.preventDefault(); e.stopPropagation();
-      if(draggedId==null || draggedId===g.id) return;
-      moveBefore(draggedId,g.id,list);
-    });
+    card.addEventListener("dragover",e=>e.preventDefault());
+    card.addEventListener("drop",e=>{e.preventDefault();e.stopPropagation();if(draggedId&&draggedId!==g.id)moveBefore(draggedId,g.id,list);});
     zone.appendChild(card);
   });
 }
 
 document.querySelectorAll(".dropzone").forEach(zone=>{
-  zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover")});
+  zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover");});
   zone.addEventListener("dragleave",()=>zone.classList.remove("dragover"));
   zone.addEventListener("drop",e=>{
     e.preventDefault();zone.classList.remove("dragover");
-    if(draggedId==null) return;
-    const id=Number(draggedId);
-    const g=state.guests.find(x=>x.id===id);
-    if(!g) return;
-    if(e.target===zone || e.target.classList.contains("empty")){
-      moveGuest(g,zone.dataset.list,true);
+    if(!draggedId)return;
+    if(e.target===zone||e.target.classList.contains("empty")){
+      const g=state.guests.find(x=>x.id===draggedId);
+      if(g)moveGuest(g,zone.dataset.list);
     }
   });
 });
 
-function shift(g,dir){
-  const arr=ordered(g.list);
-  const idx=arr.findIndex(x=>x.id===g.id);
-  const j=idx+dir;
-  if(j<0 || j>=arr.length) return;
-  [arr[idx].order,arr[j].order]=[arr[j].order,arr[idx].order];
-  render();
-}
-function moveGuest(g,newList,toEnd=true){
-  const old=g.list;
-  g.list=newList;
-  g.order=toEnd ? ordered(newList).filter(x=>x.id!==g.id).length+1 : 1;
-  normalize(old); normalize(newList); render();
-}
-function moveBefore(dragId,targetId,targetList){
-  const drag=state.guests.find(x=>x.id===Number(dragId));
-  const target=state.guests.find(x=>x.id===Number(targetId));
-  if(!drag||!target) return;
-  const old=drag.list;
-  drag.list=targetList;
-  const arr=ordered(targetList).filter(x=>x.id!==drag.id);
-  const idx=arr.findIndex(x=>x.id===target.id);
-  arr.splice(idx,0,drag);
-  arr.forEach((x,i)=>x.order=i+1);
-  normalize(old); render();
-}
-function editGuest(g){
-  const name=prompt("Edit guest name:",g.name);
-  if(name!==null && name.trim()){g.name=name.trim();render();}
-}
-function promoteNeeded(limit){
-  const n=limit || neededSuggestions();
-  eligibleB().slice(0,n).forEach(g=>g.status="todo");
-  render();
-}
-function showDeclinePrompt(g){
-  const n=neededSuggestions();
-  if(n<1) return;
-  const next=eligibleB()[0];
-  if(!next) return;
-  document.getElementById("declineText").textContent=`${g.name} declined. ${next.name} is the highest-priority eligible person on the B List. Mark ${next.name} as “To be invited”?`;
-  document.getElementById("declineDialog").showModal();
-  document.getElementById("declineYes").onclick=()=>{next.status="todo";declineDialog.close();render();};
-  document.getElementById("declineNo").onclick=()=>declineDialog.close();
+async function updateGuest(id,patch){
+  isBusy=true;
+  try{
+    await api(`/guests?id=eq.${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(patch)});
+  }finally{isBusy=false;await loadState();}
 }
 
-document.getElementById("addBtn").onclick=()=>{
+async function normalizeOrders(list,arr=null){
+  const items=arr||ordered(list);
+  for(let i=0;i<items.length;i++){
+    await api(`/guests?id=eq.${encodeURIComponent(items[i].id)}`,{
+      method:"PATCH",body:JSON.stringify({sort_order:i+1})
+    });
+  }
+}
+
+async function shift(g,dir){
+  const arr=ordered(g.list);
+  const i=arr.findIndex(x=>x.id===g.id),j=i+dir;
+  if(j<0||j>=arr.length)return;
+  [arr[i],arr[j]]=[arr[j],arr[i]];
+  isBusy=true;
+  try{await normalizeOrders(g.list,arr);}finally{isBusy=false;await loadState();}
+}
+
+async function moveGuest(g,newList){
+  isBusy=true;
+  try{
+    const oldList=g.list;
+    const newOrder=ordered(newList).length+1;
+    await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{
+      method:"PATCH",body:JSON.stringify({list:newList,sort_order:newOrder})
+    });
+    await normalizeOrders(oldList,ordered(oldList).filter(x=>x.id!==g.id));
+  }finally{isBusy=false;await loadState();}
+}
+
+async function moveBefore(dragId,targetId,targetList){
+  const drag=state.guests.find(x=>x.id===dragId);
+  const target=state.guests.find(x=>x.id===targetId);
+  if(!drag||!target)return;
+  isBusy=true;
+  try{
+    const oldList=drag.list;
+    if(oldList!==targetList){
+      await api(`/guests?id=eq.${encodeURIComponent(drag.id)}`,{method:"PATCH",body:JSON.stringify({list:targetList})});
+    }
+    let arr=ordered(targetList).filter(x=>x.id!==drag.id);
+    const idx=arr.findIndex(x=>x.id===target.id);
+    arr.splice(idx,0,{...drag,list:targetList});
+    await normalizeOrders(targetList,arr);
+    if(oldList!==targetList) await normalizeOrders(oldList,ordered(oldList).filter(x=>x.id!==drag.id));
+  }finally{isBusy=false;await loadState();}
+}
+
+async function editGuest(g){
+  const name=prompt("Edit guest name:",g.name);
+  if(name!==null&&name.trim())await updateGuest(g.id,{name:name.trim()});
+}
+
+async function promoteNeeded(){
+  const people=eligibleB().slice(0,neededSuggestions());
+  isBusy=true;
+  try{
+    for(const g of people){
+      await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"PATCH",body:JSON.stringify({status:"todo"})});
+    }
+  }finally{isBusy=false;await loadState();}
+}
+
+function showDeclinePrompt(g){
+  const next=eligibleB()[0];
+  if(!next)return;
+  document.getElementById("declineText").textContent=
+    `${g.name} declined. ${next.name} is the highest-priority eligible person on the B List. Mark ${next.name} as “To be invited”?`;
+  document.getElementById("declineDialog").showModal();
+  document.getElementById("declineYes").onclick=async()=>{
+    document.getElementById("declineDialog").close();
+    await updateGuest(next.id,{status:"todo"});
+  };
+  document.getElementById("declineNo").onclick=()=>document.getElementById("declineDialog").close();
+}
+
+document.getElementById("addBtn").onclick=async()=>{
   const name=document.getElementById("newName").value.trim();
-  if(!name) return;
+  if(!name)return;
   const list=document.getElementById("newList").value;
-  state.guests.push({id:Date.now(),name,list,status:"not",order:ordered(list).length+1});
-  document.getElementById("newName").value="";
-  render();
+  isBusy=true;
+  try{
+    await api("/guests",{method:"POST",body:JSON.stringify({
+      dinner_id:dinnerId,name,list,status:"not",sort_order:ordered(list).length+1
+    })});
+    document.getElementById("newName").value="";
+  }finally{isBusy=false;await loadState();}
 };
 document.getElementById("newName").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("addBtn").click();});
-document.getElementById("target").onchange=()=>{
-  state.target=Math.max(1,parseInt(document.getElementById("target").value)||8);
-  render();
+
+document.getElementById("target").onchange=async()=>{
+  const target=Math.max(1,parseInt(document.getElementById("target").value)||8);
+  isBusy=true;
+  try{
+    await api(`/dinners?id=eq.${encodeURIComponent(dinnerId)}`,{method:"PATCH",body:JSON.stringify({target})});
+  }finally{isBusy=false;await loadState();}
 };
 
-document.getElementById("resetBtn").onclick=()=>{
-  if(confirm("Reset the planner to the fictional sample guest list?")){
-    state=JSON.parse(JSON.stringify(seed));
-    save();
-    render();
+document.getElementById("resetBtn").onclick=async()=>{
+  if(!confirm("Reset this shared dinner to the fictional sample guest list?"))return;
+  isBusy=true;
+  try{
+    await api(`/guests?dinner_id=eq.${encodeURIComponent(dinnerId)}`,{method:"DELETE"});
+    await api("/guests",{method:"POST",body:JSON.stringify(SAMPLE_GUESTS.map(g=>({...g,dinner_id:dinnerId})))});
+    await api(`/dinners?id=eq.${encodeURIComponent(dinnerId)}`,{method:"PATCH",body:JSON.stringify({target:8})});
+  }finally{isBusy=false;await loadState();}
+};
+
+document.getElementById("copyLinkBtn").onclick=async()=>{
+  try{
+    await navigator.clipboard.writeText(location.href);
+    const b=document.getElementById("copyLinkBtn");
+    b.textContent="Link copied";
+    setTimeout(()=>b.textContent="Copy share link",1500);
+  }catch(e){
+    prompt("Copy this shared link:",location.href);
   }
 };
 
 function escapeHtml(s){
   return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 }
-render();
+
+(async function startApp(){
+  await loadState();
+  scheduleNextSync(5000);
+})();
 </script>
+
 </body>
 </html>
