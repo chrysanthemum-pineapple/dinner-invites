@@ -523,6 +523,7 @@ function render(){
   document.getElementById("warning").textContent =
     c.projected>state.target ? `Potentially over-invited by ${c.projected-state.target}.` : "";
   renderGuidance(c);
+  renderList("CONFIRMED");
   renderList("A");
   renderList("B");
   document.getElementById("confirmedCount").textContent=`${ordered("CONFIRMED").length} guest${ordered("CONFIRMED").length===1?"":"s"}`;
