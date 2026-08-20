@@ -68,7 +68,7 @@
   .toolbar input{min-width:220px;flex:1}
   .toolbar button{border:0;background:#2f2b27;color:#fff;border-radius:11px;padding:10px 14px;font-weight:700}
 
-  .lists{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .lists{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
   .listPanel{
     background:rgba(255,253,249,.78);border:1px solid var(--line);border-radius:var(--radius);
     padding:14px;min-height:420px
@@ -106,6 +106,8 @@
   .moreBtns button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 8px;font-size:12px}
   .danger{color:#a13d3d}
   .sectionLabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 3px 7px}
+  .coupleTag{display:inline-flex;align-items:center;gap:5px;margin-top:7px;font-size:12px;color:var(--muted);background:#f2ede7;border-radius:999px;padding:5px 8px}
+  .confirmedPanel{background:rgba(239,248,241,.9);border-color:#d5e7da}
   .empty{color:var(--muted);padding:28px 10px;text-align:center;border:1px dashed var(--line);border-radius:12px}
   footer{color:var(--muted);font-size:12px;text-align:center;padding:18px 0}
 
@@ -190,44 +192,166 @@
   </div>
 
   <div class="lists">
-    <section class="listPanel">
-      <div class="listHeader"><div><h2>A List</h2><span>Primary invitees</span></div><span id="aCount"></span></div>
-      <div id="A" class="dropzone" data-list="A"><div class="card">
-      <div class="cardTop"><span class="handle">⋮⋮</span><div class="name">Maya</div><span class="statusBadge s-yes">Accepted</span></div>
+    <section class="listPanel confirmedPanel">
+      <div class="listHeader"><div><h2>Confirmed</h2><span>Attending</span></div><span id="confirmedCount">3 guests</span></div>
+      <div id="CONFIRMED" class="dropzone" data-list="CONFIRMED"><div class="card">
+      <div class="cardTop">
+        <span class="handle">✓</span>
+        <div class="name">Maya</div>
+        <span class="statusBadge s-yes">Accepted</span>
+      </div>
+      <div class="coupleTag">♡ Couple with Daniel</div>
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Accepted</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option>Not in a couple</option><option selected>Couple with Daniel</option></select><span></span>
+      </div>
     </div>
 <div class="card">
-      <div class="cardTop"><span class="handle">⋮⋮</span><div class="name">Daniel</div><span class="statusBadge s-yes">Accepted</span></div>
+      <div class="cardTop">
+        <span class="handle">✓</span>
+        <div class="name">Daniel</div>
+        <span class="statusBadge s-yes">Accepted</span>
+      </div>
+      <div class="coupleTag">♡ Couple with Maya</div>
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Accepted</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option>Not in a couple</option><option selected>Couple with Maya</option></select><span></span>
+      </div>
     </div>
 <div class="card">
-      <div class="cardTop"><span class="handle">⋮⋮</span><div class="name">Priya</div><span class="statusBadge s-await">Invited / awaiting response</span></div>
-    </div>
-<div class="card">
-      <div class="cardTop"><span class="handle">⋮⋮</span><div class="name">Marcus</div><span class="statusBadge s-await">Invited / awaiting response</span></div>
-    </div>
-<div class="card">
-      <div class="cardTop"><span class="handle">⋮⋮</span><div class="name">Elena</div><span class="statusBadge s-yes">Accepted</span></div>
-    </div>
-<div class="card">
-      <div class="cardTop"><span class="handle">⋮⋮</span><div class="name">Theo</div><span class="statusBadge s-no">Declined</span></div>
+      <div class="cardTop">
+        <span class="handle">✓</span>
+        <div class="name">Elena</div>
+        <span class="statusBadge s-yes">Accepted</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Accepted</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
     </div></div>
     </section>
     <section class="listPanel">
-      <div class="listHeader"><div><h2>B List</h2><span>Backups in priority order</span></div><span id="bCount"></span></div>
+      <div class="listHeader"><div><h2>A List</h2><span>Primary invitees</span></div><span id="aCount">3 guests</span></div>
+      <div id="A" class="dropzone" data-list="A"><div class="card">
+      <div class="cardTop">
+        <span class="handle">⋮⋮</span>
+        <div class="name">Priya</div>
+        <span class="statusBadge s-await">Invited / awaiting response</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Invited / awaiting response</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
+    </div>
+<div class="card">
+      <div class="cardTop">
+        <span class="handle">⋮⋮</span>
+        <div class="name">Marcus</div>
+        <span class="statusBadge s-await">Invited / awaiting response</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Invited / awaiting response</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
+    </div>
+<div class="card">
+      <div class="cardTop">
+        <span class="handle">⋮⋮</span>
+        <div class="name">Theo</div>
+        <span class="statusBadge s-no">Declined</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Declined</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
+    </div></div>
+    </section>
+    <section class="listPanel">
+      <div class="listHeader"><div><h2>B List</h2><span>Backups in priority order</span></div><span id="bCount">4 guests</span></div>
       <div id="B" class="dropzone" data-list="B"><div class="card">
-      <div class="cardTop"><span class="priority">1</span><div class="name">Nina</div><span class="statusBadge s-todo">To be invited</span></div>
+      <div class="cardTop">
+        <span class="priority">1</span>
+        <div class="name">Nina</div>
+        <span class="statusBadge s-todo">To be invited</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>To be invited</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
     </div>
 <div class="card">
-      <div class="cardTop"><span class="priority">2</span><div class="name">Jordan</div><span class="statusBadge s-not">Not yet invited</span></div>
+      <div class="cardTop">
+        <span class="priority">2</span>
+        <div class="name">Jordan</div>
+        <span class="statusBadge s-not">Not yet invited</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Not yet invited</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
     </div>
 <div class="card">
-      <div class="cardTop"><span class="priority">3</span><div class="name">Leah</div><span class="statusBadge s-not">Not yet invited</span></div>
+      <div class="cardTop">
+        <span class="priority">3</span>
+        <div class="name">Leah</div>
+        <span class="statusBadge s-not">Not yet invited</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Not yet invited</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
     </div>
 <div class="card">
-      <div class="cardTop"><span class="priority">4</span><div class="name">Owen</div><span class="statusBadge s-not">Not yet invited</span></div>
+      <div class="cardTop">
+        <span class="priority">4</span>
+        <div class="name">Owen</div>
+        <span class="statusBadge s-not">Not yet invited</span>
+      </div>
+      
+      <div class="cardControls">
+        <select aria-label="Invitation status"><option selected>Not yet invited</option></select>
+        <button>Edit</button>
+      </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select aria-label="Couple"><option selected>Not in a couple</option><option>Couple with another guest…</option></select><span></span>
+      </div>
     </div></div>
     </section>
   </div>
-
   <footer>Your guest list is stored only in this browser using local storage.</footer>
 </div>
 
@@ -330,7 +454,7 @@ async function loadState(){
     const dinners = await api(`/dinners?id=eq.${encodeURIComponent(dinnerId)}&select=id,target,name`);
     if(!dinners || !dinners.length) throw new Error("This shared dinner could not be found.");
 
-    const guests = await api(`/guests?dinner_id=eq.${encodeURIComponent(dinnerId)}&select=id,name,list,status,sort_order&order=list.asc,sort_order.asc`);
+    const guests = await api(`/guests?dinner_id=eq.${encodeURIComponent(dinnerId)}&select=id,name,list,status,sort_order,partner_id&order=list.asc,sort_order.asc`);
     const snap = JSON.stringify([dinners[0].target, guests]);
 
     state = {target:dinners[0].target, guests:guests || []};
@@ -361,7 +485,16 @@ function scheduleNextSync(delay=5000){
   }, delay);
 }
 function ordered(list){
+  if(list==="CONFIRMED"){
+    return state.guests.filter(g=>g.status==="accepted").sort((a,b)=>(a.list===b.list ? a.sort_order-b.sort_order : a.list==="A" ? -1 : 1));
+  }
+  return state.guests.filter(g=>g.list===list && g.status!=="accepted").sort((a,b)=>a.sort_order-b.sort_order);
+}
+function fullOrdered(list){
   return state.guests.filter(g=>g.list===list).sort((a,b)=>a.sort_order-b.sort_order);
+}
+function partnerOf(g){
+  return g.partner_id ? state.guests.find(x=>x.id===g.partner_id) : null;
 }
 function counts(){
   const c=k=>state.guests.filter(g=>g.status===k).length;
@@ -392,6 +525,7 @@ function render(){
   renderGuidance(c);
   renderList("A");
   renderList("B");
+  document.getElementById("confirmedCount").textContent=`${ordered("CONFIRMED").length} guest${ordered("CONFIRMED").length===1?"":"s"}`;
   document.getElementById("aCount").textContent=`${ordered("A").length} guest${ordered("A").length===1?"":"s"}`;
   document.getElementById("bCount").textContent=`${ordered("B").length} guest${ordered("B").length===1?"":"s"}`;
 }
@@ -424,75 +558,72 @@ function renderGuidance(c){
 }
 
 function renderList(list){
-  const zone=document.getElementById(list);
+  const zone=document.getElementById(list), guests=ordered(list);
   zone.innerHTML="";
-  const guests=ordered(list);
   if(!guests.length){
-    zone.innerHTML='<div class="empty">Drop or add guests here.</div>';
+    zone.innerHTML=`<div class="empty">${list==="CONFIRMED"?"No confirmed guests yet.":"Drop or add guests here."}</div>`;
     return;
   }
   guests.forEach((g,i)=>{
     const card=document.createElement("div");
-    card.className="card";
-    card.draggable=true;
-    card.dataset.id=g.id;
-    const priority=list==="B" ? `<span class="priority">${i+1}</span>` : `<span class="handle">⋮⋮</span>`;
-    const badge=STATUS[g.status];
+    card.className="card"; card.dataset.id=g.id; card.draggable=list!=="CONFIRMED";
+    const badge=STATUS[g.status], partner=partnerOf(g);
+    const possible=state.guests.filter(x=>x.id!==g.id).sort((a,b)=>a.name.localeCompare(b.name));
+    const left=list==="B"?`<span class="priority">${i+1}</span>`:`<span class="handle">${list==="CONFIRMED"?"✓":"⋮⋮"}</span>`;
     card.innerHTML=`
-      <div class="cardTop">
-        ${priority}
-        <div class="name">${escapeHtml(g.name)}</div>
-        <span class="statusBadge ${badge.cls}">${badge.label}</span>
-      </div>
+      <div class="cardTop">${left}<div class="name">${escapeHtml(g.name)}</div><span class="statusBadge ${badge.cls}">${badge.label}</span></div>
+      ${partner?`<div class="coupleTag">♡ Couple with ${escapeHtml(partner.name)}</div>`:""}
       <div class="cardControls">
-        <select aria-label="Invitation status">
-          ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${g.status===k?"selected":""}>${v.label}</option>`).join("")}
-        </select>
+        <select class="statusSelect">${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${g.status===k?"selected":""}>${v.label}</option>`).join("")}</select>
         <button class="editBtn">Edit</button>
       </div>
+      <div class="cardControls" style="margin-top:8px">
+        <select class="partnerSelect">
+          <option value="">Not in a couple</option>
+          ${possible.map(x=>`<option value="${x.id}" ${g.partner_id===x.id?"selected":""}>Couple with ${escapeHtml(x.name)}</option>`).join("")}
+        </select><span></span>
+      </div>
       <div class="moreBtns">
-        <button class="upBtn" ${i===0?"disabled":""}>↑ Up</button>
-        <button class="downBtn" ${i===guests.length-1?"disabled":""}>↓ Down</button>
-        <button class="moveBtn">Move to ${list==="A"?"B":"A"} List</button>
+        ${list==="CONFIRMED"
+          ? `<button class="returnBtn">Return to ${g.list} List</button>`
+          : `<button class="upBtn" ${i===0?"disabled":""}>↑ Up</button><button class="downBtn" ${i===guests.length-1?"disabled":""}>↓ Down</button><button class="moveBtn">Move to ${list==="A"?"B":"A"} List</button>`}
         <button class="deleteBtn danger">Delete</button>
       </div>`;
-    card.querySelector("select").onchange=async e=>{
-      const old=g.status;
-      await updateGuest(g.id,{status:e.target.value});
-      if(e.target.value==="declined" && old!=="declined") showDeclinePrompt(g);
+    card.querySelector(".statusSelect").onchange=async e=>{
+      const old=g.status; await updateGuest(g.id,{status:e.target.value});
+      if(e.target.value==="declined"&&old!=="declined")showDeclinePrompt(g);
     };
+    card.querySelector(".partnerSelect").onchange=e=>setPartner(g.id,e.target.value||null);
     card.querySelector(".editBtn").onclick=()=>editGuest(g);
-    card.querySelector(".moveBtn").onclick=()=>moveGuest(g,list==="A"?"B":"A");
     card.querySelector(".deleteBtn").onclick=async()=>{
-      if(confirm(`Delete ${g.name}?`)){
-        await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"DELETE"});
-        await normalizeOrders(list);
-        await loadState();
-      }
+      if(confirm(`Delete ${g.name}?`)){ await clearPartnerLink(g); await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"DELETE"}); await loadState(); }
     };
-    card.querySelector(".upBtn").onclick=()=>shift(g,-1);
-    card.querySelector(".downBtn").onclick=()=>shift(g,1);
-    card.addEventListener("dragstart",e=>{draggedId=g.id;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
-    card.addEventListener("dragend",()=>card.classList.remove("dragging"));
-    card.addEventListener("dragover",e=>e.preventDefault());
-    card.addEventListener("drop",e=>{e.preventDefault();e.stopPropagation();if(draggedId&&draggedId!==g.id)moveBefore(draggedId,g.id,list);});
+    if(list==="CONFIRMED"){
+      card.querySelector(".returnBtn").onclick=()=>updateGuest(g.id,{status:"awaiting"});
+    }else{
+      card.querySelector(".moveBtn").onclick=()=>moveGuest(g,list==="A"?"B":"A");
+      card.querySelector(".upBtn").onclick=()=>shift(g,-1);
+      card.querySelector(".downBtn").onclick=()=>shift(g,1);
+      card.addEventListener("dragstart",e=>{draggedId=g.id;card.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+      card.addEventListener("dragend",()=>card.classList.remove("dragging"));
+      card.addEventListener("dragover",e=>e.preventDefault());
+      card.addEventListener("drop",e=>{e.preventDefault();e.stopPropagation();if(draggedId&&draggedId!==g.id)moveBefore(draggedId,g.id,list);});
+    }
     zone.appendChild(card);
   });
 }
-
 document.querySelectorAll(".dropzone").forEach(zone=>{
-  zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover");});
+  if(zone.dataset.list==="CONFIRMED") return;
+  zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("dragover")});
   zone.addEventListener("dragleave",()=>zone.classList.remove("dragover"));
   zone.addEventListener("drop",e=>{
     e.preventDefault();zone.classList.remove("dragover");
     if(!draggedId)return;
     if(e.target===zone||e.target.classList.contains("empty")){
-      const g=state.guests.find(x=>x.id===draggedId);
-      if(g)moveGuest(g,zone.dataset.list);
+      const g=state.guests.find(x=>x.id===draggedId); if(g)moveGuest(g,zone.dataset.list);
     }
   });
 });
-
 async function updateGuest(id,patch){
   isBusy=true;
   try{
@@ -510,19 +641,21 @@ async function normalizeOrders(list,arr=null){
 }
 
 async function shift(g,dir){
-  const arr=ordered(g.list);
-  const i=arr.findIndex(x=>x.id===g.id),j=i+dir;
+  const arr=ordered(g.list), i=arr.findIndex(x=>x.id===g.id), j=i+dir;
   if(j<0||j>=arr.length)return;
-  [arr[i],arr[j]]=[arr[j],arr[i]];
+  const x=arr[i], y=arr[j], xo=x.sort_order, yo=y.sort_order;
   isBusy=true;
-  try{await normalizeOrders(g.list,arr);}finally{isBusy=false;await loadState();}
+  try{
+    await api(`/guests?id=eq.${encodeURIComponent(x.id)}`,{method:"PATCH",body:JSON.stringify({sort_order:yo})});
+    await api(`/guests?id=eq.${encodeURIComponent(y.id)}`,{method:"PATCH",body:JSON.stringify({sort_order:xo})});
+  }finally{isBusy=false;await loadState();}
 }
 
 async function moveGuest(g,newList){
   isBusy=true;
   try{
     const oldList=g.list;
-    const newOrder=ordered(newList).length+1;
+    const newOrder=fullOrdered(newList).length+1;
     await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{
       method:"PATCH",body:JSON.stringify({list:newList,sort_order:newOrder})
     });
@@ -545,6 +678,34 @@ async function moveBefore(dragId,targetId,targetList){
     arr.splice(idx,0,{...drag,list:targetList});
     await normalizeOrders(targetList,arr);
     if(oldList!==targetList) await normalizeOrders(oldList,ordered(oldList).filter(x=>x.id!==drag.id));
+  }finally{isBusy=false;await loadState();}
+}
+
+async function clearPartnerLink(g){
+  if(!g.partner_id)return;
+  const p=state.guests.find(x=>x.id===g.partner_id);
+  await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:null})});
+  if(p&&p.partner_id===g.id) await api(`/guests?id=eq.${encodeURIComponent(p.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:null})});
+}
+async function setPartner(guestId,newPartnerId){
+  const g=state.guests.find(x=>x.id===guestId); if(!g)return;
+  isBusy=true;
+  try{
+    if(g.partner_id){
+      const old=state.guests.find(x=>x.id===g.partner_id);
+      await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:null})});
+      if(old&&old.partner_id===g.id) await api(`/guests?id=eq.${encodeURIComponent(old.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:null})});
+    }
+    if(newPartnerId){
+      const p=state.guests.find(x=>x.id===newPartnerId); if(!p)return;
+      if(p.partner_id&&p.partner_id!==g.id){
+        const op=state.guests.find(x=>x.id===p.partner_id);
+        await api(`/guests?id=eq.${encodeURIComponent(p.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:null})});
+        if(op&&op.partner_id===p.id) await api(`/guests?id=eq.${encodeURIComponent(op.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:null})});
+      }
+      await api(`/guests?id=eq.${encodeURIComponent(g.id)}`,{method:"PATCH",body:JSON.stringify({partner_id:newPartnerId})});
+      await api(`/guests?id=eq.${encodeURIComponent(newPartnerId)}`,{method:"PATCH",body:JSON.stringify({partner_id:g.id})});
+    }
   }finally{isBusy=false;await loadState();}
 }
 
@@ -583,7 +744,7 @@ document.getElementById("addBtn").onclick=async()=>{
   isBusy=true;
   try{
     await api("/guests",{method:"POST",body:JSON.stringify({
-      dinner_id:dinnerId,name,list,status:"not",sort_order:ordered(list).length+1
+      dinner_id:dinnerId,name,list,status:"not",sort_order:fullOrdered(list).length+1
     })});
     document.getElementById("newName").value="";
   }finally{isBusy=false;await loadState();}
